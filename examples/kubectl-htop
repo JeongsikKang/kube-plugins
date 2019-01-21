@@ -19,7 +19,7 @@ print_data () {
                 for (( i=1; i<=${max}; i++ ))
                 do
                         if [ ${i} -le ${used} ];then
-                                cpubar="${cpubar}|"
+                                cpubar="${cpubar}▒"
                         else
                                 cpubar="${cpubar} "
                         fi
@@ -30,7 +30,7 @@ print_data () {
                 for (( i=1; i<=${max}; i++ ))
                 do
                         if [ ${i} -le ${used} ];then
-                                membar="${membar}|"
+                                membar="${membar}▒"
                         else
                                 membar="${membar} "
                         fi
