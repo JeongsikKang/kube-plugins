@@ -1,0 +1,55 @@
+#!/bin/bash
+
+extract_utilization () {
+        me=$(basename $0)
+        out=$(mktemp -q $PWD/$me.XXXXXX)
+        /usr/local/bin/kubectl top pods | tail -n +2 | sort  >> ${out}
+}
+
+
+print_data () {
+        echo "POD CPU CPUBAR(■:100m) MEMORY MEMORYBAR(■:100Mi)" | awk '{printf "%-30s %-5s %-30s %-7s %-30s\n", $1,$2,$3,$4,$5}'
+        while read eachline
+        do
+                pod=$(echo ${eachline} | awk '{print $1}')
+                cpu=$(echo ${eachline} | awk '{print $2}' | sed -e 's/m//')
+                mem=$(echo ${eachline} | awk '{print $3}' | sed -e 's/Mi//')
+
+                used=$(echo "${cpu} / 100" | bc)
+                cpubar="";max=30 # 2 cores
+                for (( i=1; i<=${max}; i++ ))
+                do
+                        if [ ${i} -le ${used} ];then
+                                cpubar="${cpubar}■"
+                        else
+                                cpubar="${cpubar}□"
+                        fi
+                done
+
+                used=$(echo "${mem} / 100" | bc)
+                membar="";max=30
+                for (( i=1; i<=${max}; i++ ))
+                do
+                        if [ ${i} -le ${used} ];then
+                                membar="${membar}■"
+                        else
+                                membar="${membar}□"
+                        fi
+                done
+
+		if [ ${#pod} -gt 25 ];then
+			pod=$(echo ${pod} | cut -b 1-25 | awk '{print $1".."}')
+		fi
+
+                echo "${pod} ${cpu}m ${cpubar} ${mem}Mi ${membar}" | awk '{printf "%-30s %-5s %-10s %-7s %-10s\n", $1,$2,$3,$4,$5}'
+
+        done < ${out}
+}
+
+cleanup () {
+        rm -f ${out}
+}
+
+extract_utilization
+print_data
+cleanup
