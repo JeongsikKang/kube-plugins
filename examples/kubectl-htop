@@ -3,11 +3,11 @@
 extract_utilization () {
         me=$(basename $0)
         out=$(mktemp -q $PWD/$me.XXXXXX)
-        /usr/local/bin/kubectl top pods | tail -n +2 | sort  >> ${out}
+        kubectl top pods $1 $2| tail -n +2 | sort  >> ${out}
 }
 
 print_data () {
-        echo "POD CPU CPUBAR(|:100m) MEMORY MEMORYBAR(|:100Mi)" | awk '{printf "%-30s %-5s %-30s %-7s %-30s\n", $1,$2,$3,$4,$5}'
+        echo "POD CPU CPUBAR(|:100m) MEMORY MEMORYBAR(|:100Mi)" | awk '{printf "%-30s %7s %-32s %7s %-32s\n", $1,$2,$3,$4,$5}'
         while read eachline
         do
                 pod=$(echo ${eachline} | awk '{print $1}')
@@ -15,7 +15,7 @@ print_data () {
                 mem=$(echo ${eachline} | awk '{print $3}' | sed -e 's/Mi//')
 
                 used=$(echo "${cpu} / 100" | bc)
-                cpubar="";max=30 # 2 cores
+                cpubar="[";max=30 # 3 cores
                 for (( i=1; i<=${max}; i++ ))
                 do
                         if [ ${i} -le ${used} ];then
@@ -26,7 +26,7 @@ print_data () {
                 done
 
                 used=$(echo "${mem} / 100" | bc)
-                membar="";max=30
+                membar="[";max=30
                 for (( i=1; i<=${max}; i++ ))
                 do
                         if [ ${i} -le ${used} ];then
@@ -40,7 +40,7 @@ print_data () {
 			pod=$(echo ${pod} | cut -b 1-25 | awk '{print $1" .."}')
 		fi
 
-                echo "${pod},${cpu}m,${cpubar},${mem}Mi,${membar}" | awk -F "," '{printf "%-30s %-5s %-10s %-7s %-10s\n", $1,$2,$3,$4,$5}'
+                echo "${pod},${cpu}m,${cpubar}],${mem}Mi,${membar}]" | awk -F "," '{printf "%-30s %7s %-32s %7s %-32s\n", $1,$2,$3,$4,$5}'
         done < ${out}
 }
 
@@ -48,6 +48,6 @@ cleanup () {
         rm -f ${out}
 }
 
-extract_utilization
+extract_utilization $1 $2
 print_data
 cleanup
